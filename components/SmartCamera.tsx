@@ -14,33 +14,33 @@ interface SmartCameraProps {
 }
 
 const steps: StepConfig[] = [
-  { 
-    id: 'front', 
-    label: 'Front View', 
-    shortLabel: 'Hairline', 
-    target: { minYaw: -0.25, maxYaw: 0.25, minPitch: -0.2, maxPitch: 0.2 }, 
-    guide: 'Look straight at camera' 
+  {
+    id: 'front',
+    label: 'Front View',
+    shortLabel: 'Front',
+    target: { minYaw: -0.35, maxYaw: 0.35, minPitch: -0.3, maxPitch: 0.3 },
+    guide: 'Look straight at camera'
   },
   {
     id: 'right',
     label: 'Right Side',
     shortLabel: 'Right',
-    target: { minYaw: 0.25, maxYaw: 1.0 },
+    target: { minYaw: 0.2, maxYaw: 1.2 },
     guide: 'Turn head to the Right'
   },
   {
     id: 'left',
     label: 'Left Side',
     shortLabel: 'Left',
-    target: { minYaw: -1.0, maxYaw: -0.25 },
+    target: { minYaw: -1.2, maxYaw: -0.2 },
     guide: 'Turn head to the Left'
   },
-  { 
-    id: 'top', 
-    label: 'Crown Area', 
-    shortLabel: 'Top', 
-    target: { minYaw: -0.5, maxYaw: 0.5, minPitch: 0.15, maxPitch: 0.8 }, 
-    guide: 'Tilt head down' 
+  {
+    id: 'top',
+    label: 'Crown Area',
+    shortLabel: 'Top',
+    target: { minYaw: -0.6, maxYaw: 0.6, minPitch: 0.1, maxPitch: 0.9 },
+    guide: 'Tilt head down'
   },
   { 
     id: 'back', 
@@ -186,10 +186,10 @@ export const SmartCamera: React.FC<SmartCameraProps> = ({ step, setStep, images,
               let newGuidance: typeof guidance = null;
               let isAligned = false;
 
-              if (coverage < 0.25) {
+              if (coverage < 0.20) {
                 newGuidance = 'closer';
                 setInstruction("Move Closer");
-              } else if (coverage > 0.70) {
+              } else if (coverage > 0.75) {
                 newGuidance = 'back';
                 setInstruction("Move Back");
               } else {
@@ -225,7 +225,7 @@ export const SmartCamera: React.FC<SmartCameraProps> = ({ step, setStep, images,
               if (isAligned) {
                 setStatus('perfect');
                 setInstruction("Perfect - Hold Still");
-                setProgress(p => Math.min(p + 4, 100)); // Fill bar
+                setProgress(p => Math.min(p + 8, 100));
               } else {
                 setStatus('wrong-pose');
                 setProgress(p => Math.max(p - 5, 0)); // Decay bar
@@ -336,22 +336,30 @@ export const SmartCamera: React.FC<SmartCameraProps> = ({ step, setStep, images,
                    
                    {/* Auto Capture Progress Bar */}
                    {(status !== 'manual' && currentStep.id !== 'back') && (
-                       <div className="h-14 w-full bg-gray-800 rounded-full relative overflow-hidden flex items-center justify-center border border-white/10">
-                           <div 
-                                className="absolute left-0 top-0 bottom-0 bg-emerald-500 transition-all duration-100 ease-linear"
-                                style={{ width: `${progress}%` }} 
-                           />
-                           <span className="relative z-10 font-bold text-white tracking-wide uppercase text-sm">
-                               {progress > 0 ? "Aligning..." : "Auto Capture"}
-                           </span>
+                       <div className="flex flex-col gap-3">
+                           <div className="h-14 w-full bg-gray-800 rounded-full relative overflow-hidden flex items-center justify-center border border-white/10">
+                               <div
+                                    className="absolute left-0 top-0 bottom-0 bg-emerald-500 transition-all duration-100 ease-linear"
+                                    style={{ width: `${progress}%` }}
+                               />
+                               <span className="relative z-10 font-bold text-white tracking-wide uppercase text-sm">
+                                   {progress > 0 ? "Aligning..." : "Auto Capture"}
+                               </span>
+                           </div>
+                           <button
+                               onClick={takePhoto}
+                               className="py-3 bg-white/10 hover:bg-white/20 text-white rounded-xl font-medium transition-colors border border-white/20"
+                           >
+                               Take Photo Manually
+                           </button>
                        </div>
                    )}
 
                    {/* Manual Shutter for Back View */}
                    {(status === 'manual' || currentStep.id === 'back') && (
                        <div className="flex justify-center">
-                           <button onClick={takePhoto} className="w-16 h-16 rounded-full border-4 border-white flex items-center justify-center bg-white/10 active:scale-95 transition-transform">
-                               <div className="w-12 h-12 bg-white rounded-full" />
+                           <button onClick={takePhoto} className="w-20 h-20 rounded-full border-[6px] border-white flex items-center justify-center bg-white/20 active:scale-90 transition-transform shadow-2xl">
+                               <div className="w-14 h-14 bg-white rounded-full" />
                            </button>
                        </div>
                    )}
