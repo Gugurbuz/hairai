@@ -71,6 +71,7 @@ export const SmartCamera: React.FC<SmartCameraProps> = ({ step, setStep, images,
   useEffect(() => {
     const startCamera = async () => {
       try {
+        setInstruction("Requesting camera access...");
         const stream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } },
           audio: false
@@ -79,11 +80,20 @@ export const SmartCamera: React.FC<SmartCameraProps> = ({ step, setStep, images,
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
           videoRef.current.onloadedmetadata = () => {
-             videoRef.current?.play().catch(() => {});
+             videoRef.current?.play().then(() => {
+               console.log('Camera started successfully');
+               setInstruction("Camera ready");
+             }).catch((e) => {
+               console.error('Error playing video:', e);
+               setStatus('manual');
+               setInstruction("Camera error - Manual mode");
+             });
           };
         }
       } catch (err) {
+        console.error('Camera access error:', err);
         setStatus('manual');
+        setInstruction("Camera denied - Manual mode");
       }
     };
     startCamera();
@@ -103,13 +113,38 @@ export const SmartCamera: React.FC<SmartCameraProps> = ({ step, setStep, images,
     }
 
     const loadAI = async () => {
-      setInstruction("Aligning...");
-      await loadScript("https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.18.0/dist/tf.min.js");
-      await loadScript("https://cdn.jsdelivr.net/npm/@tensorflow-models/blazeface@0.0.7/dist/blazeface.min.js");
-      if (window.blazeface) {
-        const m = await window.blazeface.load();
-        setModel(m);
-        setStatus('searching');
+      try {
+        setInstruction("Loading AI...");
+
+        await loadScript("https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.18.0/dist/tf.min.js");
+
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        if (!window.tf) {
+          console.error('TensorFlow.js not loaded');
+          setStatus('manual');
+          setInstruction("AI unavailable - Manual mode");
+          return;
+        }
+
+        await loadScript("https://cdn.jsdelivr.net/npm/@tensorflow-models/blazeface@0.0.7/dist/blazeface.min.js");
+
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        if (window.blazeface) {
+          setInstruction("Initializing AI...");
+          const m = await window.blazeface.load();
+          setModel(m);
+          setStatus('searching');
+          setInstruction("Position your face");
+        } else {
+          setStatus('manual');
+          setInstruction("AI unavailable - Manual mode");
+        }
+      } catch (error) {
+        console.error('Error loading AI:', error);
+        setStatus('manual');
+        setInstruction("Manual mode - Tap to capture");
       }
     };
     loadAI();
@@ -117,7 +152,7 @@ export const SmartCamera: React.FC<SmartCameraProps> = ({ step, setStep, images,
 
   // 3. Render Loop
   useEffect(() => {
-    if (capturedImage || status === 'manual') return;
+    if (capturedImage) return;
 
     const loop = async () => {
       const video = videoRef.current;
@@ -131,14 +166,13 @@ export const SmartCamera: React.FC<SmartCameraProps> = ({ step, setStep, images,
             canvas.height = video.videoHeight;
           }
 
-          // Draw Mirrored Video
           ctx.save();
           ctx.translate(canvas.width, 0);
           ctx.scale(-1, 1);
           ctx.drawImage(video, 0, 0);
           ctx.restore();
 
-          if (model && currentStep.target) {
+          if (model && currentStep.target && status !== 'manual') {
             const predictions = await model.estimateFaces(video, false);
 
             if (predictions.length > 0) {
