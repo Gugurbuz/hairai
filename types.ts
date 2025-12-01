@@ -14,12 +14,14 @@ export interface PoseTarget {
   maxYaw: number;
   minPitch?: number;
   maxPitch?: number;
+  minRoll?: number; // Head tilt (ear to shoulder)
+  maxRoll?: number;
 }
 
 export interface StepConfig {
   id: string;
-  label: string; // Long label for top instruction
-  shortLabel: string; // Short label for bottom progress bar
+  label: string;
+  shortLabel: string;
   target: PoseTarget | null;
   guide: string;
 }
@@ -27,6 +29,8 @@ export interface StepConfig {
 export interface PoseResult {
   yaw: number;
   pitch: number;
+  roll: number;
+  probability: number;
 }
 
 export interface LeadData {
@@ -46,7 +50,6 @@ export type ViewState =
   | 'lead-form' 
   | 'report';
 
-// Extend Window interface for BlazeFace globals
 declare global {
   interface Window {
     blazeface: {

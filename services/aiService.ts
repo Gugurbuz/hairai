@@ -1,3 +1,4 @@
+
 import { PoseResult } from '../types';
 
 export const loadScript = (src: string): Promise<boolean> => {
@@ -16,27 +17,35 @@ export const loadScript = (src: string): Promise<boolean> => {
 };
 
 export const calculatePose = (prediction: any): PoseResult => {
-  if (!prediction || !prediction.landmarks) return { yaw: 0, pitch: 0 };
+  if (!prediction || !prediction.landmarks) return { yaw: 0, pitch: 0, roll: 0, probability: 0 };
+  
+  const probability = prediction.probability ? prediction.probability[0] : 0;
   
   // BlazeFace landmarks: [eyeRight, eyeLeft, nose, mouth, earRight, earLeft]
   const lm = prediction.landmarks as number[][]; 
   const rightEye = lm[0];
   const leftEye = lm[1];
   const nose = lm[2];
-
-  // YAW (Rotation Left/Right)
-  // Determine where the nose is relative to the center of the eyes
-  const eyeMidX = (rightEye[0] + leftEye[0]) / 2;
-  const eyeDist = Math.abs(rightEye[0] - leftEye[0]); // Distance between eyes as a scale unit
   
-  // Normalization: 0 = Center, -1 = Right, +1 = Left (Approx)
-  // Note: Directions depend on mirroring.
-  const yaw = (nose[0] - eyeMidX) / (eyeDist || 1);
+  // Distance between eyes (Inter-pupillary distance)
+  const dx = rightEye[0] - leftEye[0];
+  const dy = rightEye[1] - leftEye[1];
+  const eyeDist = Math.sqrt(dx * dx + dy * dy);
 
-  // PITCH (Up/Down) - Simple approximation
+  // Center point between eyes
+  const eyeMidX = (rightEye[0] + leftEye[0]) / 2;
   const eyeMidY = (rightEye[1] + leftEye[1]) / 2;
-  const noseY = nose[1];
-  const pitch = (noseY - eyeMidY) / (eyeDist || 1); 
 
-  return { yaw, pitch };
+  // YAW: Relative X position of nose to eye-center
+  const yawRaw = (nose[0] - eyeMidX) / (eyeDist || 1);
+
+  // PITCH: Relative Y position of nose to eye-center
+  // Offset 0.4 because nose is naturally lower
+  const pitchRaw = ((nose[1] - eyeMidY) / (eyeDist || 1)) - 0.4; 
+
+  // ROLL: Angle of the eyes relative to horizontal
+  // In radians. 0 is horizontal.
+  const rollRaw = Math.atan2(dy, dx); 
+
+  return { yaw: yawRaw, pitch: pitchRaw, roll: rollRaw, probability };
 };
