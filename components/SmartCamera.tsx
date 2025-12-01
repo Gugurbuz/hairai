@@ -21,19 +21,19 @@ const steps: StepConfig[] = [
     target: { minYaw: -0.25, maxYaw: 0.25, minPitch: -0.2, maxPitch: 0.2 }, 
     guide: 'Look straight at camera' 
   },
-  { 
-    id: 'right', 
-    label: 'Right Side', 
-    shortLabel: 'Right', 
-    target: { minYaw: 0.4, maxYaw: 1.5 }, // Positive yaw = Head turned Right
-    guide: 'Turn head to the Right' 
+  {
+    id: 'right',
+    label: 'Right Side',
+    shortLabel: 'Right',
+    target: { minYaw: 0.25, maxYaw: 1.0 },
+    guide: 'Turn head to the Right'
   },
-  { 
-    id: 'left', 
-    label: 'Left Side', 
-    shortLabel: 'Left', 
-    target: { minYaw: -1.5, maxYaw: -0.4 }, // Negative yaw = Head turned Left
-    guide: 'Turn head to the Left' 
+  {
+    id: 'left',
+    label: 'Left Side',
+    shortLabel: 'Left',
+    target: { minYaw: -1.0, maxYaw: -0.25 },
+    guide: 'Turn head to the Left'
   },
   { 
     id: 'top', 
@@ -194,17 +194,18 @@ export const SmartCamera: React.FC<SmartCameraProps> = ({ step, setStep, images,
                 setInstruction("Move Back");
               } else {
                 // 2. Angle Check (Mirrored Yaw)
-                const yaw = pose.yaw * -1; // Mirror the yaw for intuitive checking
+                const yaw = pose.yaw * -1;
                 const pitch = pose.pitch;
                 const { minYaw, maxYaw, minPitch, maxPitch } = currentStep.target;
 
-                // Priority Logic: Fix Yaw first, then Pitch
+                console.log(`Step: ${currentStep.id}, Yaw: ${yaw.toFixed(2)}, Target: [${minYaw}, ${maxYaw}]`);
+
                 if (yaw < minYaw) {
-                    newGuidance = 'left'; // "Turn Left" (arrow pointing left)
-                    setInstruction("Turn Left");
+                    newGuidance = 'left';
+                    setInstruction("Turn LEFT");
                 } else if (yaw > maxYaw) {
-                    newGuidance = 'right'; // "Turn Right"
-                    setInstruction("Turn Right");
+                    newGuidance = 'right';
+                    setInstruction("Turn RIGHT");
                 } else {
                     // Yaw is good, check Pitch if needed
                     if (minPitch !== undefined && pitch < minPitch) {
