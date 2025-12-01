@@ -297,19 +297,19 @@ export default function App() {
   };
 
   return (
-    <div className="font-sans text-slate-800 bg-white min-h-screen">
+    <div className="font-sans text-slate-800 bg-white h-screen flex flex-col">
       <Header currentView={view} setView={setView} />
-      <main>
+      <main className={view === 'camera' ? 'flex-1 overflow-hidden' : ''}>
         {view === 'landing' && <LandingView onStart={() => setView('gender-select')} />}
         {view === 'gender-select' && <GenderSelectView onSelect={handleGenderSelect} />}
         {view === 'instructions' && <InstructionsView onReady={handleInstructionsReady} />}
         {view === 'camera' && (
-          <SmartCamera 
-            step={step} 
-            setStep={setStep} 
-            images={images} 
-            setImages={setImages} 
-            onAnalyze={() => setView('analysis')} 
+          <SmartCamera
+            step={step}
+            setStep={setStep}
+            images={images}
+            setImages={setImages}
+            onAnalyze={() => setView('analysis')}
           />
         )}
         {view === 'analysis' && <AnalysisView onComplete={() => setView('lead-form')} />}

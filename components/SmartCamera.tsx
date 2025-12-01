@@ -256,8 +256,12 @@ export const SmartCamera: React.FC<SmartCameraProps> = ({ step, setStep, images,
     const canvas = canvasRef.current;
     if (canvas) {
         if (navigator.vibrate) navigator.vibrate(200);
-        setCapturedImage(canvas.toDataURL('image/jpeg', 0.9));
+        const imageData = canvas.toDataURL('image/jpeg', 0.9);
+        console.log('Image captured, length:', imageData.length);
+        setCapturedImage(imageData);
         setStatus('capturing');
+    } else {
+      console.error('Canvas not available for capture');
     }
   };
 
@@ -275,7 +279,7 @@ export const SmartCamera: React.FC<SmartCameraProps> = ({ step, setStep, images,
   };
 
   return (
-    <div className="flex flex-col h-full bg-black relative">
+    <div className="flex flex-col h-full min-h-screen bg-black relative">
        
        {/* Top Instruction Pill */}
        <div className="absolute top-8 left-0 right-0 z-30 flex justify-center">
@@ -285,11 +289,17 @@ export const SmartCamera: React.FC<SmartCameraProps> = ({ step, setStep, images,
        </div>
 
        {/* Camera Viewport */}
-       <div className="flex-1 relative overflow-hidden bg-gray-900 flex items-center justify-center">
+       <div className="flex-1 relative overflow-hidden bg-gray-900 flex items-center justify-center min-h-0">
            <video ref={videoRef} className="absolute opacity-0 pointer-events-none" playsInline autoPlay muted />
-           
+
            {capturedImage ? (
-               <img src={capturedImage} className="absolute inset-0 w-full h-full object-contain bg-black z-40" />
+               <img
+                 src={capturedImage}
+                 alt="Captured"
+                 className="absolute inset-0 w-full h-full object-contain bg-black z-40"
+                 onLoad={() => console.log('Image loaded successfully')}
+                 onError={(e) => console.error('Image load error:', e)}
+               />
            ) : (
                <>
                    <canvas ref={canvasRef} className="absolute inset-0 w-full h-full object-cover" />
