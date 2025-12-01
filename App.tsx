@@ -165,7 +165,7 @@ const AnalysisView: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
   );
 };
 
-const LeadForm: React.FC<{ onSubmit: (data: LeadData) => void, initialGender: string }> = ({ onSubmit, initialGender }) => {
+const LeadForm: React.FC<{ onSubmit: (data: LeadData) => void, initialGender: string, images: Record<string, string> }> = ({ onSubmit, initialGender, images }) => {
   const [formData, setFormData] = useState<LeadData>({
     fullName: '',
     email: '',
@@ -174,11 +174,36 @@ const LeadForm: React.FC<{ onSubmit: (data: LeadData) => void, initialGender: st
     age: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setTimeout(() => onSubmit(formData), 1500);
+    setError(null);
+
+    try {
+      const { createLead } = await import('./lib/leadService');
+      const result = await createLead({
+        leadData: formData,
+        images: images,
+        analysisData: {
+          temperature_score: 75,
+          norwood_scale: '3',
+          estimated_grafts_min: 2000,
+          estimated_grafts_max: 3000,
+        }
+      });
+
+      if (result.success) {
+        onSubmit(formData);
+      } else {
+        setError('Failed to submit. Please try again.');
+        setIsSubmitting(false);
+      }
+    } catch (err) {
+      setError('An error occurred. Please try again.');
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -222,8 +247,14 @@ const LeadForm: React.FC<{ onSubmit: (data: LeadData) => void, initialGender: st
                 value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
            </div>
 
+           {error && (
+             <div className="bg-red-50 text-red-600 p-3 rounded-xl text-sm text-center">
+               {error}
+             </div>
+           )}
+
            <button type="submit" disabled={isSubmitting}
-              className="w-full bg-blue-600 text-white px-6 py-4 rounded-xl font-bold shadow-lg mt-4 hover:bg-blue-700 flex justify-center items-center gap-2">
+              className="w-full bg-blue-600 text-white px-6 py-4 rounded-xl font-bold shadow-lg mt-4 hover:bg-blue-700 flex justify-center items-center gap-2 disabled:opacity-50">
               {isSubmitting ? <Loader2 className="animate-spin"/> : <>View Report <ArrowRight size={18}/></>}
            </button>
         </form>
@@ -282,7 +313,7 @@ export default function App() {
           />
         )}
         {view === 'analysis' && <AnalysisView onComplete={() => setView('lead-form')} />}
-        {view === 'lead-form' && <LeadForm onSubmit={(data) => { setLeadData(data); setView('report'); }} initialGender={gender} />}
+        {view === 'lead-form' && <LeadForm onSubmit={(data) => { setLeadData(data); setView('report'); }} initialGender={gender} images={images} />}
         {view === 'report' && <ReportView images={images} leadData={leadData} />}
       </main>
     </div>
