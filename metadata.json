@@ -1,0 +1,7 @@
+{
+  "name": "HairAI Analysis",
+  "description": "AI-powered hair analysis tool guiding users to take standardized photos for clinical assessment.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
